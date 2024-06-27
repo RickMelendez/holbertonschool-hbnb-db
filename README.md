@@ -6,7 +6,7 @@ It passes the tests provided in the `/hbnb/part1/tests` directory.
 ## Some things to note
 
 - Doesn't implement the place_amenities `endpoints` yet.
-- The repositories impletented are `FileRepository` and `MemoryRepository`, and also has a placeholder for a `DBRepository`.
+- The repositories implemented are `FileRepository` and `MemoryRepository`, and also has a placeholder for a `DBRepository`.
 - The `MemoryRepository` doesn't persists the data between runs.
 - The `FileRepository` persists the data in a JSON file by default called `data.json`.
 - It was designed at first to work with memory just to test the tests.
