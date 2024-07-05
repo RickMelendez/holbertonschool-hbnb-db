@@ -1,32 +1,37 @@
-"""
-User related functionality
-"""
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
+from app import db
+from src.persistence import repo
+from werkzeug.security import generate_password_hash, check_password_hash
 
-from src.models.base import Base
-
-
-class User(Base):
+class User(db.Model):
     """User representation"""
 
-    email: str
-    first_name: str
-    last_name: str
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    first_name = db.Column(db.String(120), nullable=False)
+    last_name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False) 
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.current_timestamp())
 
-    def __init__(self, email: str, first_name: str, last_name: str, **kw):
-        """Dummy init"""
-        super().__init__(**kw)
+    def __init__(self, email: str, first_name: str, last_name: str, password: str, **kwargs):
+        """Initialize User with secure password"""
+        super().__init__(**kwargs)
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
+        self.password = generate_password_hash(password)
 
     def __repr__(self) -> str:
-        """Dummy repr"""
+        """String representation of the User"""
         return f"<User {self.id} ({self.email})>"
 
     def to_dict(self) -> dict:
         """Dictionary representation of the object"""
         return {
-            "id": self.id,
+            "id": str(self.id),
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
@@ -35,29 +40,24 @@ class User(Base):
         }
 
     @staticmethod
-    def create(user: dict) -> "User":
+    def create(user_data: dict) -> "User":
         """Create a new user"""
-        from src.persistence import repo
+        users = User.query.filter_by(email=user_data["email"]).all()
+        if users:
+            raise ValueError("User already exists")
 
-        users: list["User"] = User.get_all()
+        user_data["password"] = generate_password_hash(user_data["password"])
+        new_user = User(**user_data)
 
-        for u in users:
-            if u.email == user["email"]:
-                raise ValueError("User already exists")
-
-        new_user = User(**user)
-
-        repo.save(new_user)
+        db.session.add(new_user)
+        db.session.commit()
 
         return new_user
 
     @staticmethod
     def update(user_id: str, data: dict) -> "User | None":
         """Update an existing user"""
-        from src.persistence import repo
-
-        user: User | None = User.get(user_id)
-
+        user = User.query.get(user_id)
         if not user:
             return None
 
@@ -67,7 +67,9 @@ class User(Base):
             user.first_name = data["first_name"]
         if "last_name" in data:
             user.last_name = data["last_name"]
+        if "password" in data:
+            user.password = generate_password_hash(data["password"])
 
-        repo.update(user)
+        db.session.commit()
 
         return user

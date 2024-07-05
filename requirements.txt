@@ -1,4 +1,6 @@
-flask
-flask-cors
-
+Flask
+Flask-cors
+Flask-JWT-Extended
 gunicorn
+SQLAlchemy
+Flask-SQLAlchemy

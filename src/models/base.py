@@ -1,12 +1,11 @@
 """ Abstract base class for all models """
-
+from app import db
 from datetime import datetime
 from typing import Any, Optional
 import uuid
 from abc import ABC, abstractmethod
 
-
-class Base(ABC):
+class Base(db.Model, ABC):
     """
     Base Interface for all models
     """

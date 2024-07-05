@@ -1,9 +1,8 @@
-"""
-Country related functionality
-"""
+from app import db
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
-
-class Country:
+class Country(db.Model):
     """
     Country representation
 
@@ -12,51 +11,48 @@ class Country:
     This class is used to get and list countries
     """
 
-    name: str
-    code: str
-    cities: list
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(255), nullable=False)
+    code = db.Column(db.String(3), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.current_timestamp())
 
-    def __init__(self, name: str, code: str, **kw) -> None:
-        """Dummy init"""
-        super().__init__(**kw)
+    def __init__(self, name: str, code: str, **kwargs) -> None:
+        """Initialize a Country"""
+        super().__init__(**kwargs)
         self.name = name
         self.code = code
 
     def __repr__(self) -> str:
-        """Dummy repr"""
+        """String representation of the Country"""
         return f"<Country {self.code} ({self.name})>"
 
     def to_dict(self) -> dict:
-        """Returns the dictionary representation of the country"""
+        """Dictionary representation of the object"""
         return {
+            "id": str(self.id),
             "name": self.name,
             "code": self.code,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
         }
 
     @staticmethod
     def get_all() -> list["Country"]:
         """Get all countries"""
-        from src.persistence import repo
-
-        countries: list["Country"] = repo.get_all("country")
-
-        return countries
+        return Country.query.all()
 
     @staticmethod
     def get(code: str) -> "Country | None":
         """Get a country by its code"""
-        for country in Country.get_all():
-            if country.code == code:
-                return country
-        return None
+        return Country.query.filter_by(code=code).first()
 
     @staticmethod
     def create(name: str, code: str) -> "Country":
         """Create a new country"""
-        from src.persistence import repo
+        new_country = Country(name=name, code=code)
 
-        country = Country(name, code)
+        db.session.add(new_country)
+        db.session.commit()
 
-        repo.save(country)
-
-        return country
+        return new_country

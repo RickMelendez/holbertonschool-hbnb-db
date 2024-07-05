@@ -1,32 +1,32 @@
-"""
-City related functionality
-"""
+from app import db
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
-from src.models.base import Base
-from src.models.country import Country
-
-
-class City(Base):
+class City(db.Model):
     """City representation"""
 
-    name: str
-    country_code: str
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(255), nullable=False)
+    country_code = db.Column(db.String(3), db.ForeignKey('country.code'), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.current_timestamp())
 
-    def __init__(self, name: str, country_code: str, **kw) -> None:
-        """Dummy init"""
-        super().__init__(**kw)
+    country = db.relationship("Country", backref=db.backref("cities", lazy=True))
 
+    def __init__(self, name: str, country_code: str, **kwargs) -> None:
+        """Initialize a City"""
+        super().__init__(**kwargs)
         self.name = name
         self.country_code = country_code
 
     def __repr__(self) -> str:
-        """Dummy repr"""
+        """String representation of the City"""
         return f"<City {self.id} ({self.name})>"
 
     def to_dict(self) -> dict:
         """Dictionary representation of the object"""
         return {
-            "id": self.id,
+            "id": str(self.id),
             "name": self.name,
             "country_code": self.country_code,
             "created_at": self.created_at.isoformat(),
@@ -36,25 +36,22 @@ class City(Base):
     @staticmethod
     def create(data: dict) -> "City":
         """Create a new city"""
-        from src.persistence import repo
-
-        country = Country.get(data["country_code"])
+        country = Country.query.filter_by(code=data["country_code"]).first()
 
         if not country:
             raise ValueError("Country not found")
 
-        city = City(**data)
+        new_city = City(name=data["name"], country_code=data["country_code"])
 
-        repo.save(city)
+        db.session.add(new_city)
+        db.session.commit()
 
-        return city
+        return new_city
 
     @staticmethod
     def update(city_id: str, data: dict) -> "City":
         """Update an existing city"""
-        from src.persistence import repo
-
-        city = City.get(city_id)
+        city = City.query.get(city_id)
 
         if not city:
             raise ValueError("City not found")
@@ -62,6 +59,6 @@ class City(Base):
         for key, value in data.items():
             setattr(city, key, value)
 
-        repo.update(city)
+        db.session.commit()
 
         return city
