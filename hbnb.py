@@ -1,4 +1,5 @@
 """ Another way to run the app"""
+
 from src import create_app
 
 app = create_app()
