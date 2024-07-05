@@ -17,12 +17,13 @@ def create_app(config_class="src.config.DevelopmentConfig") -> Flask:
 
     app.config.from_object(config_class)
 
-    register_extensions(app)
-    register_routes(app)
-    register_handlers(app)
-    
+    db.init_app(app)
+
     with app.app_context():
         db.create_all()
+        register_extensions(app)
+        register_routes(app)
+        register_handlers(app)
     
         return app
 
