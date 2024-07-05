@@ -1,8 +1,9 @@
 """ Initialize the Flask app. """
-
+from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from flask_cors import CORS
 
+db = SQLAlchemy()
 cors = CORS()
 
 
@@ -19,8 +20,11 @@ def create_app(config_class="src.config.DevelopmentConfig") -> Flask:
     register_extensions(app)
     register_routes(app)
     register_handlers(app)
-
-    return app
+    
+    with app.app_context():
+        db.create_all()
+    
+        return app
 
 
 def register_extensions(app: Flask) -> None:
