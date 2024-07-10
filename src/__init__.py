@@ -2,10 +2,14 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+import os
+from .config import config
+
 
 db = SQLAlchemy()
 cors = CORS()
-
+jwt = JWTManager()
 
 def create_app(config_class="src.config.DevelopmentConfig") -> Flask:
     """

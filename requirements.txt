@@ -4,3 +4,5 @@ Flask-JWT-Extended
 gunicorn
 SQLAlchemy
 Flask-SQLAlchemy
+alembic
+python-dotenv
